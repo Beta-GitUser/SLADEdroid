@@ -1,5 +1,5 @@
 ## SLADE  
-It's a Doom Editor
+It's a Doom Editor, now on touchscreens
 
 ### About
 
