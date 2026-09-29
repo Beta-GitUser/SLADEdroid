@@ -1,5 +1,6 @@
 add_library(slade-core STATIC
 	Common.cpp
+	Memory.cpp
 )
 
 target_include_directories(slade-core
