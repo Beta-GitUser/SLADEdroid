@@ -3,6 +3,11 @@ if (NOT WX_VERSION)
 	SET(WX_VERSION 3.0)
 endif (NOT WX_VERSION)
 
+if (BUILD_DISTILLED_CORE)
+	add_subdirectory(Core)
+	return()
+endif ()
+
 # Sources
 file(GLOB_RECURSE SLADE_SOURCES CONFIGURE_DEPENDS
 	Application/*.cpp
