@@ -36,7 +36,6 @@ MemChunk& MemChunk::operator=(MemChunk&& other) noexcept
 {
 	if (this == &other)
 		return *this;
-
 	delete[] data_;
 	data_ = other.data_;
 	cur_ptr_ = other.cur_ptr_;
@@ -75,7 +74,6 @@ bool MemChunk::reSize(uint32_t new_size, bool preserve_data)
 	uint8_t* replacement = new (std::nothrow) uint8_t[new_size];
 	if (!replacement)
 		return false;
-
 	std::memset(replacement, 0, new_size);
 	if (preserve_data && data_)
 		std::memcpy(replacement, data_, std::min(size_, new_size));
@@ -136,17 +134,20 @@ bool MemChunk::importMem(const uint8_t* start, uint32_t len)
 
 bool MemChunk::exportFile(string_view filename, uint32_t start, uint32_t size) const
 {
+	if (start > size_ || size > size_ - start)
+		return false;
+	if (!size)
+		size = size_ - start;
+
 	std::ofstream file(string{ filename }, std::ios::binary | std::ios::trunc);
 	if (!file)
 		return false;
-	return exportFile(*reinterpret_cast<File*>(nullptr), start, size) ||
-		       (start <= size_ && (size == 0 || start + size <= size_) &&
-				file.write(reinterpret_cast<const char*>(data_ + start), size ? size : size_ - start).good());
+	return !size || static_cast<bool>(file.write(reinterpret_cast<const char*>(data_ + start), size));
 }
 
 bool MemChunk::exportFile(File& file, uint32_t start, uint32_t size) const
 {
-	if (!file.isOpen() || start > size_ || start + size > size_)
+	if (!file.isOpen() || start > size_ || size > size_ - start)
 		return false;
 	if (!size)
 		size = size_ - start;
@@ -155,7 +156,7 @@ bool MemChunk::exportFile(File& file, uint32_t start, uint32_t size) const
 
 bool MemChunk::exportMemChunk(MemChunk& mc, uint32_t start, uint32_t size) const
 {
-	if (start > size_ || start + size > size_)
+	if (start > size_ || size > size_ - start)
 		return false;
 	if (!size)
 		size = size_ - start;
@@ -211,7 +212,7 @@ bool MemChunk::seek(uint32_t offset, uint32_t origin)
 
 bool MemChunk::readMC(MemChunk& mc, uint32_t size)
 {
-	if (size > size_ - std::min(cur_ptr_, size_))
+	if (cur_ptr_ > size_ || size > size_ - cur_ptr_)
 		return false;
 	if (!mc.importMem(data_ + cur_ptr_, size))
 		return false;
@@ -231,7 +232,7 @@ string MemChunk::asString(uint32_t offset, uint32_t length) const
 {
 	if (offset > size_)
 		return {};
-	if (!length || offset + length > size_)
+	if (!length || length > size_ - offset)
 		length = size_ - offset;
 	return string{ reinterpret_cast<const char*>(data_ + offset), length };
 }
