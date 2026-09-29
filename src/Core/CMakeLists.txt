@@ -3,6 +3,7 @@ add_library(slade-core STATIC
 	Memory.cpp
 	File.cpp
 	FileSystem.cpp
+	MemChunk.cpp
 )
 
 target_include_directories(slade-core
