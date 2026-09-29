@@ -64,11 +64,14 @@ bool writeText(string_view path, string_view text)
 time_t modifiedTime(string_view path)
 {
 	std::error_code ec;
-	auto time = std::filesystem::last_write_time(string{ path }, ec);
+	auto file_time = std::filesystem::last_write_time(string{ path }, ec);
 	if (ec)
 		return 0;
 
-	auto system_time = std::chrono::clock_cast<std::chrono::system_clock>(time);
+	// C++17 has no clock_cast. Convert through the difference between the
+	// filesystem clock and system_clock at approximately the same instant.
+	auto system_time = std::chrono::system_clock::now() +
+	                   (file_time - std::filesystem::file_time_type::clock::now());
 	return std::chrono::system_clock::to_time_t(system_time);
 }
 
